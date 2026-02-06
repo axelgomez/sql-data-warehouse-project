@@ -1,0 +1,77 @@
+CREATE OR ALTER PROCEDURE bronze.load_bronze AS
+BEGIN
+
+	PRINT '===============================================================';
+	PRINT 'Loading Bronze Layer';
+	PRINT '===============================================================';
+
+	PRINT '===============================================================';
+	PRINT 'Loading CRM Tables';
+	PRINT '===============================================================';
+
+	PRINT '>> Truncating Table: bronze.crm_cust_info';
+	TRUNCATE TABLE bronze.crm_cust_info;
+
+	PRINT '>> Inserting Data Into: bronze.crm_cust_info';
+	BULK INSERT bronze.crm_cust_info
+	FROM 'D:\Cursos\SQL\sql-data-warehouse-project\datasets\source_crm\cust_info.csv'
+	WITH (
+		FIRSTROW = 2,          -- Skip the first row, header
+		FIELDTERMINATOR = ',', -- Fields terminated by ,
+		TABLOCK                -- Ensure better performance by locking destination table
+	);
+
+	TRUNCATE TABLE bronze.crm_prd_info;
+
+	BULK INSERT bronze.crm_prd_info
+	FROM 'D:\Cursos\SQL\sql-data-warehouse-project\datasets\source_crm\prd_info.csv'
+	WITH (
+		FIRSTROW = 2,          -- Skip the first row, header
+		FIELDTERMINATOR = ',', -- Fields terminated by ,
+		TABLOCK                -- Ensure better performance by locking destination table
+	);
+
+	TRUNCATE TABLE bronze.crm_sales_details;
+
+	BULK INSERT bronze.crm_sales_details
+	FROM 'D:\Cursos\SQL\sql-data-warehouse-project\datasets\source_crm\sales_details.csv'
+	WITH (
+		FIRSTROW = 2,          -- Skip the first row, header
+		FIELDTERMINATOR = ',', -- Fields terminated by ,
+		TABLOCK                -- Ensure better performance by locking destination table
+	);
+
+	PRINT '===============================================================';
+	PRINT 'Loading CRM Tables';
+	PRINT '===============================================================';
+
+	TRUNCATE TABLE bronze.erp_cust_az12;
+
+	BULK INSERT bronze.erp_cust_az12
+	FROM 'D:\Cursos\SQL\sql-data-warehouse-project\datasets\source_erp\cust_az12.csv'
+	WITH (
+		FIRSTROW = 2,          -- Skip the first row, header
+		FIELDTERMINATOR = ',', -- Fields terminated by ,
+		TABLOCK                -- Ensure better performance by locking destination table
+	);
+
+	TRUNCATE TABLE bronze.erp_loc_a101;
+
+	BULK INSERT bronze.erp_loc_a101
+	FROM 'D:\Cursos\SQL\sql-data-warehouse-project\datasets\source_erp\loc_a101.csv'
+	WITH (
+		FIRSTROW = 2,          -- Skip the first row, header
+		FIELDTERMINATOR = ',', -- Fields terminated by ,
+		TABLOCK                -- Ensure better performance by locking destination table
+	);
+
+	TRUNCATE TABLE bronze.erp_px_cat_g1v2;
+
+	BULK INSERT bronze.erp_px_cat_g1v2
+	FROM 'D:\Cursos\SQL\sql-data-warehouse-project\datasets\source_erp\px_cat_g1v2.csv'
+	WITH (
+		FIRSTROW = 2,          -- Skip the first row, header
+		FIELDTERMINATOR = ',', -- Fields terminated by ,
+		TABLOCK                -- Ensure better performance by locking destination table
+	);
+END
