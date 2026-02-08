@@ -63,3 +63,29 @@ FROM silver.crm_cust_info
 
 SELECT DISTINCT cst_gndr
 FROM silver.crm_cust_info
+
+
+-- Check for Invalid Data Orders
+SELECT *
+FROM bronze.crm_prd_info
+WHERE prd_end_dt < prd_start_dt
+-- 200 results
+
+SELECT *
+FROM bronze.crm_prd_info
+WHERE prd_end_dt > prd_start_dt
+-- 0 results
+
+-- We are going to ask expert why
+
+-- --------------------------------------------------
+-- Intermediate query to solve the previous problem
+-- THIS IS NOT A TEST but a custom query
+-- Date fixing query:
+SELECT
+    *,
+    LEAD(prd_start_dt) OVER (PARTITION BY prd_key ORDER BY prd_start_dt ASC)-1 AS prd_end_dt_2
+FROM bronze.crm_prd_info
+WHERE prd_key IN ('AC-HE-HL-U509-R', 'AC-HE-HL-U509')
+-- --------------------------------------------------
+
