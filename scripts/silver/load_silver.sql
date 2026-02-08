@@ -64,3 +64,113 @@ SELECT
     CAST(prd_start_dt AS DATE) AS prd_start_dt,
     CAST(LEAD(prd_start_dt) OVER (PARTITION BY prd_key ORDER BY prd_start_dt ASC)-1 AS DATE) AS prd_end_dt
 FROM bronze.crm_prd_info
+
+
+-- ==============================
+-- Table: crm_sales_details
+-- ==============================
+
+INSERT INTO silver.crm_sales_details (
+    sls_ord_num,
+    sls_prd_key,
+    sls_cust_id,
+    sls_order_dt,
+    sls_ship_dt,
+    sls_due_dt,
+    sls_sales,
+    sls_quantity,
+    sls_price
+)
+SELECT
+    sls_ord_num,
+    sls_prd_key,
+    sls_cust_id,
+    CASE
+        WHEN sls_order_dt = 0 OR LEN(sls_order_dt) != 8 THEN NULL
+        ELSE CAST(CAST(sls_order_dt AS VARCHAR) AS DATE)
+    END AS sls_order_dt,
+    CASE
+        WHEN sls_ship_dt = 0 OR LEN(sls_ship_dt) != 8 THEN NULL
+        ELSE CAST(CAST(sls_ship_dt AS VARCHAR) AS DATE)
+    END AS sls_ship_dt,
+    CASE
+        WHEN sls_due_dt = 0 OR LEN(sls_due_dt) != 8 THEN NULL
+        ELSE CAST(CAST(sls_due_dt AS VARCHAR) AS DATE)
+    END AS sls_due_dt,
+    CASE
+        WHEN sls_sales <= 0 OR sls_sales IS NULL OR sls_sales != sls_quantity * ABS(sls_price)
+            THEN sls_quantity * ABS(sls_price)
+        ELSE sls_sales
+    END AS sls_sales, -- Recalculates sales if original value is missing or incorrect
+    sls_quantity,
+    CASE
+        WHEN sls_price = 0 OR sls_price IS NULL THEN sls_sales / NULLIF(sls_quantity, 0)
+        WHEN sls_price < 0 THEN -sls_price
+        ELSE sls_price -- Derive price if original value is invalid
+    END AS sls_price
+FROM bronze.crm_sales_details
+
+
+
+-- ==============================
+-- Table: erp_cust_az12
+-- ==============================
+
+INSERT INTO silver.erp_cust_az12 (
+    cid,
+    bdate,
+    gen
+)
+SELECT
+    CASE WHEN cid LIKE 'NAS%' THEN 
+        SUBSTRING(cid, 4, LEN(cid))
+        ELSE cid
+    END AS cid,
+    CASE WHEN bdate > GETDATE() THEN NULL
+        ELSE bdate
+    END AS bdate,
+    CASE
+        WHEN UPPER(TRIM(gen)) IN ('F', 'FEMALE') THEN 'Female'
+        WHEN UPPER(TRIM(gen)) IN ('M', 'MALE') THEN 'Male'
+        ELSE 'n/a'
+    END AS gen
+FROM bronze.erp_cust_az12
+
+
+
+-- ==============================
+-- Table: erp_loc_a101
+-- ==============================
+
+
+INSERT INTO silver.erp_loc_a101 (
+    cid,
+    cntry
+)
+SELECT
+    REPLACE(cid, '-', '') AS cid,
+    CASE
+        WHEN TRIM(cntry) = 'DE' THEN 'Germany'
+        WHEN TRIM(cntry) IN ('US', 'USA') THEN 'United States'
+        WHEN TRIM(cntry) = '' OR cntry IS NULL THEN 'n/a'
+        ELSE TRIM(cntry)
+    END AS cntry -- Normalise and Handle Missing or blank country codes
+FROM bronze.erp_loc_a101
+
+
+-- ==============================
+-- Table: erp_pc_cat_g1v2
+-- ==============================
+
+INSERT INTO silver.erp_px_cat_g1v2(
+    id,
+    cat,
+    subcat,
+    maintenance
+)
+SELECT
+    id,
+    cat,
+    subcat,
+    maintenance
+FROM bronze.erp_px_cat_g1v2
